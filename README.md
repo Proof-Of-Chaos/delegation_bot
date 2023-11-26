@@ -46,8 +46,8 @@ We welcome contributions. Please follow the standard fork, branch, and pull requ
 
 ## License
 
-This project is licensed under [appropriate license].
+This project is licensed under MIT License.
 
 ## Contact
 
-For queries or feedback, please reach out to [contact information].
+For queries or feedback, please reach out to @GovPartRewKSM on Twitter.
