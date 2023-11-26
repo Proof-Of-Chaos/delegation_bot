@@ -65,13 +65,13 @@ async function updateVote(api, refIndex, blockNumber) {
         }
     });
     console.log(`Ayes: ${ayes}, Nays: ${nays}, Abstains: ${abstains}`);
-    let currentVoteDirection = types_1.VoteChoice.Aye; // Default to "Aye", change based on counts
+    let currentVoteDirection = types_1.VoteChoice.Abstain; // Default to "Aye", change based on counts
     // Determine the highest vote count
     if (nays > ayes && nays > abstains) {
         currentVoteDirection = types_1.VoteChoice.Nay;
     }
-    else if (abstains > ayes && abstains > nays) {
-        currentVoteDirection = types_1.VoteChoice.Abstain;
+    else if (ayes > abstains && ayes > nays) {
+        currentVoteDirection = types_1.VoteChoice.Aye;
     }
     //only continue if there are at least 20 separate voters with NFTs
     if (numberOfVotesWithNfts > 20) {

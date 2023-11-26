@@ -84,13 +84,13 @@ export async function updateVote(api: ApiPromise, refIndex: string, blockNumber:
 
     console.log(`Ayes: ${ayes}, Nays: ${nays}, Abstains: ${abstains}`);
 
-    let currentVoteDirection = VoteChoice.Aye; // Default to "Aye", change based on counts
+    let currentVoteDirection = VoteChoice.Abstain; // Default to "Aye", change based on counts
 
     // Determine the highest vote count
     if (nays > ayes && nays > abstains) {
         currentVoteDirection = VoteChoice.Nay;
-    } else if (abstains > ayes && abstains > nays) {
-        currentVoteDirection = VoteChoice.Abstain;
+    } else if (ayes > abstains && ayes > nays) {
+        currentVoteDirection = VoteChoice.Aye;
     }
 
     //only continue if there are at least 20 separate voters with NFTs
