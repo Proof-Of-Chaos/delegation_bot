@@ -1,0 +1,28 @@
+{
+  "name": "delegation_voter",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "typescript": "^5.0.4"
+  },
+  "dependencies": {
+    "@kodadot1/uniquery": "^0.5.1-rc.0",
+    "@polkadot/api": "^10.11.1",
+    "@polkadot/types-codec": "^10.11.1",
+    "@polkadot/util": "^12.6.1",
+    "axios": "^1.6.2",
+    "dotenv": "^16.3.1",
+    "graphql": "^16.8.1",
+    "graphql-request": "^6.1.0",
+    "graphql-tag": "^2.12.6",
+    "ipfs-http-client": "^60.0.1"
+  }
+}
