@@ -11,7 +11,7 @@ async function main() {
     const api = await api_1.ApiPromise.create({ provider });
     const account = await (0, helpers_1.initAccount)();
     // Subscribe to new blocks
-    const unsubscribe = await api.rpc.chain.subscribeNewHeads(async (header) => {
+    const unsubscribe = await api.rpc.chain.subscribeFinalizedHeads(async (header) => {
         console.log(`New block: ${header.number}`);
         const blockNumber = header.number.toNumber();
         // Fetch the block hash
