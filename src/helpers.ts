@@ -309,7 +309,7 @@ export const sleep = (ms: number): Promise<void> => {
 }
 
 export const sendTelegramMessage = async (message: string): Promise<void> => {
-    if (!process.env.TELEGRAM_TOEKN || !process.env.TELEGRAM_CHAT_ID) {
+    if (!process.env.TELEGRAM_TOKEN || !process.env.TELEGRAM_CHAT_ID) {
         throw new Error("No TELEGRAM_TOKEN or TELEGRAM_CHAT_ID provided in .env");
     }
     const url = `https://api.telegram.org/bot${process.env.TELEGRAM_TOKEN}/sendMessage`;
