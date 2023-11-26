@@ -13,6 +13,9 @@
   "devDependencies": {
     "typescript": "^5.0.4"
   },
+  "engines": {
+    "node": ">=16.0.0"
+  },
   "dependencies": {
     "@kodadot1/uniquery": "^0.5.1-rc.0",
     "@polkadot/api": "^10.11.1",
