@@ -110,7 +110,7 @@ export async function updateVote(api: ApiPromise, refIndex: string, blockNumber:
                 abstain: new BN(currentVoteDirection === VoteChoice.Abstain ? 1 : 0)
             };
             //send vote extrinisc to chain
-            await sendTransaction(api, currentVoteDirection, parseInt(refIndex), balances, 1);
+            await sendTransaction(api, currentVoteDirection, parseInt(refIndex), balances, 1, ayes, nays, abstains, !!formattedVote, formattedVote ? formattedVote.voteDirection : undefined);
         }
     }
 }

@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.sendTelegramMessage = exports.sleep = exports.sendTransaction = exports.getVoteTx = exports.getAccountVote = exports.initAccount = exports.fetchVotes = exports.fetchNftsForVoter = exports.formatCastingVoteIndexer = exports.checkIndexerHealth = exports.getNftIds = exports.fetchIpfsContent = void 0;
+exports.postTweet = exports.sendTelegramMessage = exports.sleep = exports.sendTransaction = exports.getVoteTx = exports.getAccountVote = exports.initAccount = exports.fetchVotes = exports.fetchNftsForVoter = exports.formatCastingVoteIndexer = exports.checkIndexerHealth = exports.getNftIds = exports.fetchIpfsContent = void 0;
 const uniquery_1 = require("@kodadot1/uniquery");
 const graphql_request_1 = require("graphql-request");
 const util_1 = require("@polkadot/util");
@@ -15,7 +15,19 @@ const userVotesQuery_1 = require("./userVotesQuery");
 const util_crypto_1 = require("@polkadot/util-crypto");
 const chainConfig_1 = require("./chainConfig");
 const axios_1 = __importDefault(require("axios"));
+const twitter_api_v2_1 = __importDefault(require("twitter-api-v2"));
 dotenv_1.default.config();
+// Twitter client setup
+if (!process.env.TWITTER_API_KEY || !process.env.TWITTER_API_SECRET || !process.env.TWITTER_ACCESS_TOKEN || !process.env.TWITTER_ACCESS_SECRET) {
+    throw new Error("No TWITTER_API_KEY or TWITTER_API_SECRET or TWITTER_ACCESS_TOKEN or TWITTER_ACCESS_SECRET provided in .env");
+}
+const twitterClient = new twitter_api_v2_1.default({
+    appKey: process.env.TWITTER_API_KEY,
+    appSecret: process.env.TWITTER_API_SECRET,
+    accessToken: process.env.TWITTER_ACCESS_TOKEN,
+    accessSecret: process.env.TWITTER_ACCESS_SECRET,
+});
+const rwClient = twitterClient.readWrite;
 // Function to fetch content from an IPFS link
 const fetchIpfsContent = async (cid) => {
     try {
@@ -214,7 +226,7 @@ const getVoteTx = (api, voteChoice, ref, balances, conviction) => {
     return api === null || api === void 0 ? void 0 : api.tx.convictionVoting.vote(ref, vote);
 };
 exports.getVoteTx = getVoteTx;
-const sendTransaction = async (api, voteDirection, referendumIndex, balances, conviction) => {
+const sendTransaction = async (api, voteDirection, referendumIndex, balances, conviction, ayes, nays, abstains, isUpdate, previousVoteDirection) => {
     try {
         const account = await (0, exports.initAccount)();
         const tx = (0, exports.getVoteTx)(api, voteDirection, referendumIndex, balances, conviction);
@@ -223,6 +235,9 @@ const sendTransaction = async (api, voteDirection, referendumIndex, balances, co
             const unsub = await tx.signAndSend(account, ({ status, dispatchError }) => {
                 if (status.isInBlock || status.isFinalized) {
                     console.log(`Transaction included at blockHash ${status.asInBlock}`);
+                    const voteChangedText = isUpdate && previousVoteDirection ? `from ${previousVoteDirection.toUpperCase()} to ${voteDirection.toUpperCase()}` : `: ${voteDirection.toUpperCase()}`;
+                    const tweetMessage = `🚨 Delegation Wallet Alert\n\nVote for Referendum ${referendumIndex} ${voteChangedText}.\n\nNFT votes:\n👍 AYES: ${ayes}\n👎 NAYS: ${nays}\n🤐 ABSTAIN: ${abstains}\n\nVote may change as more holders participate.\n\nDelegate for impactful governance.\n#ProofOfChaos #KusamaGovernance`;
+                    (0, exports.postTweet)(tweetMessage);
                     unsub();
                 }
                 else {
@@ -285,3 +300,22 @@ const sendTelegramMessage = async (message) => {
     }
 };
 exports.sendTelegramMessage = sendTelegramMessage;
+// Function to post a tweet
+const postTweet = async (message) => {
+    try {
+        await rwClient.v2.tweet(message);
+        console.log('Tweet sent:', message);
+        (0, exports.sendTelegramMessage)(`A new Tweet has been sent:\n\n${message}`);
+    }
+    catch (error) {
+        if (error instanceof Error) {
+            console.error(error);
+            (0, exports.sendTelegramMessage)(`Error sending tweet: ${error.message}`);
+        }
+        else {
+            console.error('An unknown error occurred');
+            (0, exports.sendTelegramMessage)('An unknown error occurred in postTweet');
+        }
+    }
+};
+exports.postTweet = postTweet;

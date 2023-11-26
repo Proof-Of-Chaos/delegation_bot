@@ -10,8 +10,25 @@ import { cryptoWaitReady } from "@polkadot/util-crypto";
 import { KeyringPair } from "@polkadot/keyring/types";
 import { kusama } from './chainConfig';
 import axios from 'axios';
+import Twitter, { TweetV1 } from 'twitter-api-v2'
 
 dotenv.config();
+
+// Twitter client setup
+
+if (!process.env.TWITTER_API_KEY || !process.env.TWITTER_API_SECRET || !process.env.TWITTER_ACCESS_TOKEN || !process.env.TWITTER_ACCESS_SECRET) {
+    throw new Error("No TWITTER_API_KEY or TWITTER_API_SECRET or TWITTER_ACCESS_TOKEN or TWITTER_ACCESS_SECRET provided in .env");
+}
+
+const twitterClient = new Twitter({
+    appKey: process.env.TWITTER_API_KEY,
+    appSecret: process.env.TWITTER_API_SECRET,
+    accessToken: process.env.TWITTER_ACCESS_TOKEN,
+    accessSecret: process.env.TWITTER_ACCESS_SECRET,
+});
+
+const rwClient = twitterClient.readWrite;
+
 
 // Function to fetch content from an IPFS link
 export const fetchIpfsContent = async (cid: string): Promise<any> => {
@@ -261,7 +278,12 @@ export const sendTransaction = async (
     voteDirection: VoteChoice,
     referendumIndex: number,
     balances: { aye: BN; nay: BN; abstain: BN },
-    conviction: number
+    conviction: number,
+    ayes: number,
+    nays: number,
+    abstains: number,
+    isUpdate: boolean,
+    previousVoteDirection?: string
 ): Promise<void> => {
     try {
         const account = await initAccount();
@@ -272,6 +294,9 @@ export const sendTransaction = async (
             const unsub = await tx.signAndSend(account, ({ status, dispatchError }) => {
                 if (status.isInBlock || status.isFinalized) {
                     console.log(`Transaction included at blockHash ${status.asInBlock}`);
+                    const voteChangedText = isUpdate && previousVoteDirection ? `from ${previousVoteDirection.toUpperCase()} to ${voteDirection.toUpperCase()}` : `: ${voteDirection.toUpperCase()}`;
+                    const tweetMessage = `🚨 Delegation Wallet Alert\n\nVote for Referendum ${referendumIndex} ${voteChangedText}.\n\nNFT votes:\n👍 AYES: ${ayes}\n👎 NAYS: ${nays}\n🤐 ABSTAIN: ${abstains}\n\nVote may change as more holders participate.\n\nDelegate for impactful governance.\n#ProofOfChaos #KusamaGovernance`;
+                    postTweet(tweetMessage);
                     unsub();
                 } else {
                     console.log(`Current transaction status: ${status.type}`);
@@ -332,6 +357,22 @@ export const sendTelegramMessage = async (message: string): Promise<void> => {
     }
 };
 
+// Function to post a tweet
+export const postTweet = async (message: string): Promise<void> => {
+    try {
+        await rwClient.v2.tweet(message);
+        console.log('Tweet sent:', message);
+        sendTelegramMessage(`A new Tweet has been sent:\n\n${message}`);
+    } catch (error: unknown) {
+        if (error instanceof Error) {
+            console.error(error);
+            sendTelegramMessage(`Error sending tweet: ${error.message}`);
+        } else {
+            console.error('An unknown error occurred');
+            sendTelegramMessage('An unknown error occurred in postTweet');
+        }
+    }
+};
 
 
 

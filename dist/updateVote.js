@@ -88,7 +88,7 @@ async function updateVote(api, refIndex, blockNumber) {
                 abstain: new util_1.BN(currentVoteDirection === types_1.VoteChoice.Abstain ? 1 : 0)
             };
             //send vote extrinisc to chain
-            await (0, helpers_1.sendTransaction)(api, currentVoteDirection, parseInt(refIndex), balances, 1);
+            await (0, helpers_1.sendTransaction)(api, currentVoteDirection, parseInt(refIndex), balances, 1, ayes, nays, abstains, !!formattedVote, formattedVote ? formattedVote.voteDirection : undefined);
         }
     }
 }
