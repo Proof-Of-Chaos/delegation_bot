@@ -21,14 +21,26 @@ async function main() {
         // Iterate through the extrinsics in the block
         for (const extrinsic of block.block.extrinsics) {
             // Check for convictionVotes
-            if (isConvictionVote(extrinsic) && extrinsic.signer.toString() != (0, keyring_1.encodeAddress)(account.address, chainConfig_1.kusama.ss58Format)) {
-                const { method: { args } } = extrinsic;
-                const refId = args[0].toString(); //this is the poll_index 
+            if (isConvictionVotingExtrinsic(extrinsic) && extrinsic.signer.toString() != (0, keyring_1.encodeAddress)(account.address, chainConfig_1.kusama.ss58Format)) {
+                const { method: { args, method } } = extrinsic;
+                let refId = '';
+                if (method === 'vote') {
+                    refId = args[0].toString(); // For 'vote', the poll_index is the first argument
+                }
+                else if (method === 'removeVote') {
+                    refId = args[1].toString(); // For 'removeVote', the poll_index is the second argument
+                }
+                else if (method === 'removeOtherVote') {
+                    refId = args[2].toString(); // For 'removeOtherVote', the poll_index is the third argument
+                }
+                if (refId) {
+                    (0, updateVote_1.updateVote)(api, refId, blockNumber);
+                }
                 (0, updateVote_1.updateVote)(api, refId, blockNumber);
             }
         }
     });
-    const isConvictionVote = (extrinsic) => {
+    const isConvictionVotingExtrinsic = (extrinsic) => {
         const convictionVoteMethods = ['vote', 'removeVote', 'removeOtherVote'];
         const convictionVoteSection = 'convictionVoting';
         return extrinsic.method.section === convictionVoteSection && convictionVoteMethods.includes(extrinsic.method.method);

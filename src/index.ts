@@ -22,15 +22,27 @@ async function main(): Promise<void> {
         // Iterate through the extrinsics in the block
         for (const extrinsic of block.block.extrinsics) {
             // Check for convictionVotes
-            if (isConvictionVote(extrinsic) && extrinsic.signer.toString() != encodeAddress(account.address, kusama.ss58Format)) {
-                const { method: { args } } = extrinsic;
-                const refId = args[0].toString() //this is the poll_index 
+            if (isConvictionVotingExtrinsic(extrinsic) && extrinsic.signer.toString() != encodeAddress(account.address, kusama.ss58Format)) {
+                const { method: { args, method } } = extrinsic;
+                let refId = '';
+
+                if (method === 'vote') {
+                    refId = args[0].toString(); // For 'vote', the poll_index is the first argument
+                } else if (method === 'removeVote') {
+                    refId = args[1].toString(); // For 'removeVote', the poll_index is the second argument
+                } else if (method === 'removeOtherVote') {
+                    refId = args[2].toString(); // For 'removeOtherVote', the poll_index is the third argument
+                }
+
+                if (refId) {
+                    updateVote(api, refId, blockNumber);
+                }
                 updateVote(api, refId, blockNumber);
             }
         }
     });
 
-    const isConvictionVote = (extrinsic: any): boolean => {
+    const isConvictionVotingExtrinsic = (extrinsic: any): boolean => {
         const convictionVoteMethods = ['vote', 'removeVote', 'removeOtherVote'];
         const convictionVoteSection = 'convictionVoting';
 
