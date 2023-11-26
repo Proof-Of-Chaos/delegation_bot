@@ -30,12 +30,13 @@ async function main(): Promise<void> {
         }
     });
 
-    function isConvictionVote(extrinsic: any): boolean {
-        const convictionVoteMethod = 'vote';
+    const isConvictionVote = (extrinsic: any): boolean => {
+        const convictionVoteMethods = ['vote', 'removeVote', 'removeOtherVote'];
         const convictionVoteSection = 'convictionVoting';
 
-        return extrinsic.method.section === convictionVoteSection && extrinsic.method.method === convictionVoteMethod;
-    }
+        return extrinsic.method.section === convictionVoteSection && convictionVoteMethods.includes(extrinsic.method.method);
+    };
+
 
 }
 

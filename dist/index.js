@@ -28,11 +28,11 @@ async function main() {
             }
         }
     });
-    function isConvictionVote(extrinsic) {
-        const convictionVoteMethod = 'vote';
+    const isConvictionVote = (extrinsic) => {
+        const convictionVoteMethods = ['vote', 'removeVote', 'removeOtherVote'];
         const convictionVoteSection = 'convictionVoting';
-        return extrinsic.method.section === convictionVoteSection && extrinsic.method.method === convictionVoteMethod;
-    }
+        return extrinsic.method.section === convictionVoteSection && convictionVoteMethods.includes(extrinsic.method.method);
+    };
 }
 main().catch((error) => {
     if (error instanceof Error) {
