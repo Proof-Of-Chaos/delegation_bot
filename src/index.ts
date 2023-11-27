@@ -37,7 +37,6 @@ async function main(): Promise<void> {
                 if (refId) {
                     updateVote(api, refId, blockNumber);
                 }
-                updateVote(api, refId, blockNumber);
             }
         }
     });

@@ -36,7 +36,6 @@ async function main() {
                 if (refId) {
                     (0, updateVote_1.updateVote)(api, refId, blockNumber);
                 }
-                (0, updateVote_1.updateVote)(api, refId, blockNumber);
             }
         }
     });
