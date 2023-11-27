@@ -1,6 +1,6 @@
 import { getClient } from '@kodadot1/uniquery';
 import { request } from "graphql-request";
-import { BN } from "@polkadot/util";
+import { BN, formatBalance } from "@polkadot/util";
 import dotenv from 'dotenv';
 import { ApiPromise, Keyring } from '@polkadot/api';
 import { encodeAddress } from "@polkadot/keyring";
@@ -331,6 +331,15 @@ export const sendTransaction = async (
 
 export const sleep = (ms: number): Promise<void> => {
     return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+export const formatAmount = (value: string): string => {
+    return formatBalance(value, {
+        decimals: kusama.decimals,
+        forceUnit: "-",
+        withSi: true,
+        withUnit: kusama.symbol,
+    })
 }
 
 export const sendTelegramMessage = async (message: string): Promise<void> => {

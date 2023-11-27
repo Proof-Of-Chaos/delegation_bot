@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.postTweet = exports.sendTelegramMessage = exports.sleep = exports.sendTransaction = exports.getVoteTx = exports.getAccountVote = exports.initAccount = exports.fetchVotes = exports.fetchNftsForVoter = exports.formatCastingVoteIndexer = exports.checkIndexerHealth = exports.getNftIds = exports.fetchIpfsContent = void 0;
+exports.postTweet = exports.sendTelegramMessage = exports.formatAmount = exports.sleep = exports.sendTransaction = exports.getVoteTx = exports.getAccountVote = exports.initAccount = exports.fetchVotes = exports.fetchNftsForVoter = exports.formatCastingVoteIndexer = exports.checkIndexerHealth = exports.getNftIds = exports.fetchIpfsContent = void 0;
 const uniquery_1 = require("@kodadot1/uniquery");
 const graphql_request_1 = require("graphql-request");
 const util_1 = require("@polkadot/util");
@@ -275,6 +275,15 @@ const sleep = (ms) => {
     return new Promise(resolve => setTimeout(resolve, ms));
 };
 exports.sleep = sleep;
+const formatAmount = (value) => {
+    return (0, util_1.formatBalance)(value, {
+        decimals: chainConfig_1.kusama.decimals,
+        forceUnit: "-",
+        withSi: true,
+        withUnit: chainConfig_1.kusama.symbol,
+    });
+};
+exports.formatAmount = formatAmount;
 const sendTelegramMessage = async (message) => {
     if (!process.env.TELEGRAM_TOKEN || !process.env.TELEGRAM_CHAT_ID) {
         throw new Error("No TELEGRAM_TOKEN or TELEGRAM_CHAT_ID provided in .env");
