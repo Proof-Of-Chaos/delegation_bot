@@ -102,8 +102,8 @@ async function main(): Promise<void> {
                                     `- Track: ${trackNames}\n\n` +
                                     `👉 Delegate now: GZDxU5H28YzTrtRk7WAyGrbbpdQCdHNRUG6VKJbxpfo81bu\n\n` +
                                     `#ProofOfChaos #KusamaGovernance`;
-                                console.log(tweetMessage)
-                                // postTweet(tweetMessage);
+                                // console.log(tweetMessage)
+                                postTweet(tweetMessage);
                             }
                         } else {
                             if (isDelegationExtrinsic(method.section, method.method) && method.args[1].toString() == "GZDxU5H28YzTrtRk7WAyGrbbpdQCdHNRUG6VKJbxpfo81bu") {
@@ -118,8 +118,8 @@ async function main(): Promise<void> {
                                     `👉 Delegate now: GZDxU5H28YzTrtRk7WAyGrbbpdQCdHNRUG6VKJbxpfo81bu\n\n` +
                                     `#ProofOfChaos #KusamaGovernance`;
 
-                                console.log(tweetMessage)
-                                // postTweet(tweetMessage);
+                                // console.log(tweetMessage)
+                                postTweet(tweetMessage);
                             }
                             else if (isConvictionVotingExtrinsic(method.section, method.method) && signer.toString() != encodeAddress(account.address, kusama.ss58Format)) {
                                 processConvictionVoting(api, method, blockNumber);
