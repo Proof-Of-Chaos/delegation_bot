@@ -47,7 +47,7 @@ async function main(): Promise<void> {
     const account = await initAccount();
 
     // Subscribe to new blocks
-    const unsubscribe = await api.rpc.chain.subscribeFinalizedHeads(async header => {
+    const unsubscribe = await api.rpc.chain.subscribeNewHeads(async header => {
         console.log(`New block: ${header.number}`);
 
         const blockNumber = header.number.toNumber();
