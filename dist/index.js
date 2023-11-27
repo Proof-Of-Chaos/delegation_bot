@@ -77,16 +77,16 @@ async function main() {
                             }
                         });
                         if (processedDelegation && delegationTracks.size > 0) {
-                            let trackNames = Array.from(delegationTracks).join(', ');
+                            let trackCount = delegationTracks.size.toString();
                             // Check if all tracks are covered
                             if (delegationTracks.size === allTracks.size && [...allTracks].every(name => delegationTracks.has(name))) {
-                                trackNames = 'all';
+                                trackCount = 'all';
                             }
                             const tweetMessage = `🚨 Delegation Wallet Update 🚨\n\n` +
                                 `✨ New Delegation Added!\n` +
                                 `- Amount: ${amountDelegated} 🌟\n` +
                                 `- Conviction: ${conviction}\n` +
-                                `- Track: ${trackNames}\n\n` +
+                                `- Track Count: ${trackCount}\n\n` +
                                 `👉 Delegate now: GZDxU5H28YzTrtRk7WAyGrbbpdQCdHNRUG6VKJbxpfo81bu\n\n` +
                                 `#ProofOfChaos #KusamaGovernance`;
                             // console.log(tweetMessage)
