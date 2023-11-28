@@ -4,6 +4,7 @@ import { kusama } from './chainConfig';
 import { encodeAddress } from "@polkadot/keyring";
 import { updateVote } from './updateVote';
 import '@polkadot/api-augment';
+import { connectToServer, getDb } from './mongoClient';
 
 const isConvictionVotingExtrinsic = (section: string, method: string): boolean => {
     const convictionVoteMethods = ['vote', 'removeVote', 'removeOtherVote'];
@@ -41,104 +42,116 @@ const processConvictionVoting = (api: ApiPromise, method: any, blockNumber: numb
 
 
 async function main(): Promise<void> {
-    // Connect to a Kusama node
-    const provider = new WsProvider('wss://kusama-rpc.polkadot.io/');
-    const api = await ApiPromise.create({ provider });
-    const account = await initAccount();
-    let lastProcessedBlockNumber = -1;  // Variable to keep track of the last processed block number
+    try {
+        // Initialize MongoDB connection
+        await connectToServer();
 
-    // Subscribe to new blocks
-    const unsubscribe = await api.rpc.chain.subscribeNewHeads(async header => {
-        if (header.number.toNumber() <= lastProcessedBlockNumber) {
-            return; // Skip processing if this block has already been processed
-        }
+        // Now that the MongoDB connection is established, continue with the rest of the logic
+        const db = getDb(); // If needed, you can use the database connection here
 
-        console.log(`New block: ${header.number}`);
-        lastProcessedBlockNumber = header.number.toNumber(); // Update the last processed block number
+        // Connect to a Kusama node
+        const provider = new WsProvider('wss://kusama-rpc.polkadot.io/');
+        const api = await ApiPromise.create({ provider });
+        const account = await initAccount();
+        let lastProcessedBlockNumber = -1;  // Variable to keep track of the last processed block number
 
-        const hash = header.hash;
-        const signedBlock = await api.rpc.chain.getBlock(hash);
-        const blockNumber = header.number.toNumber();
-        // Fetch the latest block
-        // Get the API and events at the block hash
-        const apiAt = await api.at(hash);
-        const allRecords = await apiAt.query.system.events();
-        let allTracks = new Set(kusama.tracks.map(t => t.name)); // Set of all track names
+        // Subscribe to new blocks
+        const unsubscribe = await api.rpc.chain.subscribeNewHeads(async header => {
+            if (header.number.toNumber() <= lastProcessedBlockNumber) {
+                return; // Skip processing if this block has already been processed
+            }
 
-        signedBlock.block.extrinsics.forEach((extrinsic, index) => {
-            const { method, signer } = extrinsic;
-            allRecords.filter(({ phase }) =>
-                phase.isApplyExtrinsic && phase.asApplyExtrinsic.eq(index)
-            )
-                .forEach(({ event }) => {
-                    if (api.events.system.ExtrinsicSuccess.is(event)) {
-                        if (isBatchCall(method)) {
-                            const innerCallsRaw = method.args[0];
-                            const innerCalls = (innerCallsRaw as unknown as any[]);
-                            let delegationTracks = new Set();
-                            let amountDelegated = "";
-                            let conviction = "";
-                            let processedDelegation = false;
+            console.log(`New block: ${header.number}`);
+            lastProcessedBlockNumber = header.number.toNumber(); // Update the last processed block number
 
-                            innerCalls.forEach((innerCall: any) => {
-                                if (isDelegationExtrinsic(innerCall.section, innerCall.method)) {
-                                    const trackId = parseInt(innerCall.args[0].toString());
-                                    const track = kusama.tracks.find(t => t.id === trackId);
-                                    if (track) {
-                                        delegationTracks.add(track.name);
+            const hash = header.hash;
+            const signedBlock = await api.rpc.chain.getBlock(hash);
+            const blockNumber = header.number.toNumber();
+            // Fetch the latest block
+            // Get the API and events at the block hash
+            const apiAt = await api.at(hash);
+            const allRecords = await apiAt.query.system.events();
+            let allTracks = new Set(kusama.tracks.map(t => t.name)); // Set of all track names
+
+            signedBlock.block.extrinsics.forEach((extrinsic, index) => {
+                const { method, signer } = extrinsic;
+                allRecords.filter(({ phase }) =>
+                    phase.isApplyExtrinsic && phase.asApplyExtrinsic.eq(index)
+                )
+                    .forEach(({ event }) => {
+                        if (api.events.system.ExtrinsicSuccess.is(event)) {
+                            if (isBatchCall(method)) {
+                                const innerCallsRaw = method.args[0];
+                                const innerCalls = (innerCallsRaw as unknown as any[]);
+                                let delegationTracks = new Set();
+                                let amountDelegated = "";
+                                let conviction = "";
+                                let processedDelegation = false;
+
+                                innerCalls.forEach((innerCall: any) => {
+                                    if (isDelegationExtrinsic(innerCall.section, innerCall.method)) {
+                                        const trackId = parseInt(innerCall.args[0].toString());
+                                        const track = kusama.tracks.find(t => t.id === trackId);
+                                        if (track) {
+                                            delegationTracks.add(track.name);
+                                        }
+                                        processedDelegation = true;
+                                        amountDelegated = formatAmount(innerCall.args[3].toString());
+                                        conviction = innerCall.args[2].toString();
+
+                                    } else if (isConvictionVotingExtrinsic(method.section, method.method) && signer.toString() != encodeAddress(account.address, kusama.ss58Format)) {
+                                        processConvictionVoting(api, innerCall, blockNumber);
                                     }
-                                    processedDelegation = true;
-                                    amountDelegated = formatAmount(innerCall.args[3].toString());
-                                    conviction = innerCall.args[2].toString();
+                                });
 
-                                } else if (isConvictionVotingExtrinsic(method.section, method.method) && signer.toString() != encodeAddress(account.address, kusama.ss58Format)) {
-                                    processConvictionVoting(api, innerCall, blockNumber);
+                                if (processedDelegation && delegationTracks.size > 0) {
+                                    let trackCount = delegationTracks.size.toString();
+                                    // Check if all tracks are covered
+                                    if (delegationTracks.size === allTracks.size && [...allTracks].every(name => delegationTracks.has(name))) {
+                                        trackCount = 'all';
+                                    }
+                                    const tweetMessage = `🚨 Delegation Wallet Update 🚨\n\n` +
+                                        `✨ New Delegation Added!\n` +
+                                        `- Amount: ${amountDelegated} 🌟\n` +
+                                        `- Conviction: ${conviction}\n` +
+                                        `- Track Count: ${trackCount}\n\n` +
+                                        `👉 Delegate now: GZDxU5H28YzTrtRk7WAyGrbbpdQCdHNRUG6VKJbxpfo81bu\n\n` +
+                                        `#ProofOfChaos #KusamaGovernance`;
+                                    // console.log(tweetMessage)
+                                    postTweet(tweetMessage);
                                 }
-                            });
+                            } else {
+                                if (isDelegationExtrinsic(method.section, method.method) && method.args[1].toString() == "GZDxU5H28YzTrtRk7WAyGrbbpdQCdHNRUG6VKJbxpfo81bu") {
+                                    // Process delegation extrinsic
+                                    const track = kusama.tracks.find(t => t.id === parseInt(method.args[0].toString()));
+                                    const trackName = track ? track.name : "unknown";
+                                    const tweetMessage = `🚨 Delegation Wallet Update 🚨\n\n` +
+                                        `✨ New Delegation Added!\n` +
+                                        `- Amount: ${formatAmount(method.args[3].toString())} 🌟\n` +
+                                        `- Conviction: ${method.args[2].toString()}\n` +
+                                        `- Track: ${trackName}\n\n` +
+                                        `👉 Delegate now: GZDxU5H28YzTrtRk7WAyGrbbpdQCdHNRUG6VKJbxpfo81bu\n\n` +
+                                        `#ProofOfChaos #KusamaGovernance`;
 
-                            if (processedDelegation && delegationTracks.size > 0) {
-                                let trackCount = delegationTracks.size.toString();
-                                // Check if all tracks are covered
-                                if (delegationTracks.size === allTracks.size && [...allTracks].every(name => delegationTracks.has(name))) {
-                                    trackCount = 'all';
+                                    // console.log(tweetMessage)
+                                    postTweet(tweetMessage);
                                 }
-                                const tweetMessage = `🚨 Delegation Wallet Update 🚨\n\n` +
-                                    `✨ New Delegation Added!\n` +
-                                    `- Amount: ${amountDelegated} 🌟\n` +
-                                    `- Conviction: ${conviction}\n` +
-                                    `- Track Count: ${trackCount}\n\n` +
-                                    `👉 Delegate now: GZDxU5H28YzTrtRk7WAyGrbbpdQCdHNRUG6VKJbxpfo81bu\n\n` +
-                                    `#ProofOfChaos #KusamaGovernance`;
-                                // console.log(tweetMessage)
-                                postTweet(tweetMessage);
-                            }
-                        } else {
-                            if (isDelegationExtrinsic(method.section, method.method) && method.args[1].toString() == "GZDxU5H28YzTrtRk7WAyGrbbpdQCdHNRUG6VKJbxpfo81bu") {
-                                // Process delegation extrinsic
-                                const track = kusama.tracks.find(t => t.id === parseInt(method.args[0].toString()));
-                                const trackName = track ? track.name : "unknown";
-                                const tweetMessage = `🚨 Delegation Wallet Update 🚨\n\n` +
-                                    `✨ New Delegation Added!\n` +
-                                    `- Amount: ${formatAmount(method.args[3].toString())} 🌟\n` +
-                                    `- Conviction: ${method.args[2].toString()}\n` +
-                                    `- Track: ${trackName}\n\n` +
-                                    `👉 Delegate now: GZDxU5H28YzTrtRk7WAyGrbbpdQCdHNRUG6VKJbxpfo81bu\n\n` +
-                                    `#ProofOfChaos #KusamaGovernance`;
-
-                                // console.log(tweetMessage)
-                                postTweet(tweetMessage);
-                            }
-                            else if (isConvictionVotingExtrinsic(method.section, method.method) && signer.toString() != encodeAddress(account.address, kusama.ss58Format)) {
-                                processConvictionVoting(api, method, blockNumber);
+                                else if (isConvictionVotingExtrinsic(method.section, method.method) && signer.toString() != encodeAddress(account.address, kusama.ss58Format)) {
+                                    processConvictionVoting(api, method, blockNumber);
+                                }
                             }
                         }
-                    }
-                });
+                    });
+
+            });
+
 
         });
-
-
-    });
+    } catch (error) {
+        if (error instanceof Error) {
+            console.error('MongoDB connection error:', error.message);
+        }
+    }
 };
 
 main().catch((error: unknown) => {

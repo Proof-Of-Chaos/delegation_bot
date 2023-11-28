@@ -3,6 +3,7 @@ import { BN } from "@polkadot/util";
 import { ApiPromise } from '@polkadot/api';
 import { DecoratedConvictionVote, VoteChoice } from './types';
 import { fetchIpfsContent, fetchNftsForVoter, fetchVotes, formatCastingVoteIndexer, getAccountVote, getNftIds, sendTransaction, sleep } from './helpers';
+import { getDb } from './mongoClient';
 
 //PROGRAM HAS FOLLOWING STEPS
 
@@ -83,6 +84,30 @@ export async function updateVote(api: ApiPromise, refIndex: string, blockNumber:
     });
 
     console.log(`Referendum ${refIndex} - Ayes: ${ayes}, Nays: ${nays}, Abstains: ${abstains}`);
+
+    const db = getDb();
+    const talliesCollection = db.collection("tallies");
+
+    // Check if an entry with the given refIndex already exists
+    const existingEntry = await talliesCollection.findOne({ referendum: refIndex });
+
+    if (existingEntry) {
+        // Update existing entry
+        await talliesCollection.updateOne(
+            { referendum: refIndex },
+            { $set: { ayes, nays, abstains } }
+        );
+    } else {
+        // Insert new entry
+        await talliesCollection.insertOne({
+            referendum: refIndex,
+            ayes,
+            nays,
+            abstains
+        });
+    }
+
+    //add/update entry with id refIndex in tallies table in mongoDB
 
     let currentVoteDirection = VoteChoice.Abstain; // Default to "Aye", change based on counts
 

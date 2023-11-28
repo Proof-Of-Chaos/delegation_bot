@@ -5,6 +5,7 @@ const uniquery_1 = require("@kodadot1/uniquery");
 const util_1 = require("@polkadot/util");
 const types_1 = require("./types");
 const helpers_1 = require("./helpers");
+const mongoClient_1 = require("./mongoClient");
 //PROGRAM HAS FOLLOWING STEPS
 //get all the governance nfts and read out ids: use indexer
 //get all the voters for the given referendum: use indexer
@@ -65,6 +66,24 @@ async function updateVote(api, refIndex, blockNumber) {
         }
     });
     console.log(`Referendum ${refIndex} - Ayes: ${ayes}, Nays: ${nays}, Abstains: ${abstains}`);
+    const db = (0, mongoClient_1.getDb)();
+    const talliesCollection = db.collection("tallies");
+    // Check if an entry with the given refIndex already exists
+    const existingEntry = await talliesCollection.findOne({ referendum: refIndex });
+    if (existingEntry) {
+        // Update existing entry
+        await talliesCollection.updateOne({ referendum: refIndex }, { $set: { ayes, nays, abstains } });
+    }
+    else {
+        // Insert new entry
+        await talliesCollection.insertOne({
+            referendum: refIndex,
+            ayes,
+            nays,
+            abstains
+        });
+    }
+    //add/update entry with id refIndex in tallies table in mongoDB
     let currentVoteDirection = types_1.VoteChoice.Abstain; // Default to "Aye", change based on counts
     // Determine the highest vote count
     if (nays > ayes && nays > abstains) {
