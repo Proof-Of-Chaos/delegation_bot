@@ -39,14 +39,20 @@ async function main() {
     const provider = new api_1.WsProvider('wss://kusama-rpc.polkadot.io/');
     const api = await api_1.ApiPromise.create({ provider });
     const account = await (0, helpers_1.initAccount)();
+    let lastProcessedBlockNumber = -1; // Variable to keep track of the last processed block number
     // Subscribe to new blocks
     const unsubscribe = await api.rpc.chain.subscribeNewHeads(async (header) => {
+        if (header.number.toNumber() <= lastProcessedBlockNumber) {
+            return; // Skip processing if this block has already been processed
+        }
         console.log(`New block: ${header.number}`);
+        lastProcessedBlockNumber = header.number.toNumber(); // Update the last processed block number
+        const hash = header.hash;
+        const signedBlock = await api.rpc.chain.getBlock(hash);
         const blockNumber = header.number.toNumber();
         // Fetch the latest block
-        const signedBlock = await api.rpc.chain.getBlock();
         // Get the API and events at the block hash
-        const apiAt = await api.at(signedBlock.block.header.hash);
+        const apiAt = await api.at(hash);
         const allRecords = await apiAt.query.system.events();
         let allTracks = new Set(chainConfig_1.kusama.tracks.map(t => t.name)); // Set of all track names
         signedBlock.block.extrinsics.forEach((extrinsic, index) => {
