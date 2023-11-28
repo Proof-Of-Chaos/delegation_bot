@@ -64,7 +64,7 @@ async function updateVote(api, refIndex, blockNumber) {
             }
         }
     });
-    console.log(`Ayes: ${ayes}, Nays: ${nays}, Abstains: ${abstains}`);
+    console.log(`Referendum ${refIndex} - Ayes: ${ayes}, Nays: ${nays}, Abstains: ${abstains}`);
     let currentVoteDirection = types_1.VoteChoice.Abstain; // Default to "Aye", change based on counts
     // Determine the highest vote count
     if (nays > ayes && nays > abstains) {

@@ -82,7 +82,7 @@ export async function updateVote(api: ApiPromise, refIndex: string, blockNumber:
         }
     });
 
-    console.log(`Ayes: ${ayes}, Nays: ${nays}, Abstains: ${abstains}`);
+    console.log(`Referendum ${refIndex} - Ayes: ${ayes}, Nays: ${nays}, Abstains: ${abstains}`);
 
     let currentVoteDirection = VoteChoice.Abstain; // Default to "Aye", change based on counts
 
