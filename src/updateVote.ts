@@ -1,7 +1,7 @@
 import { getClient } from '@kodadot1/uniquery';
 import { BN } from "@polkadot/util";
 import { ApiPromise } from '@polkadot/api';
-import { DecoratedConvictionVote, VoteChoice } from './types';
+import { CastingVotingNode, DecoratedConvictionVote, VoteChoice } from './types';
 import { fetchIpfsContent, fetchNftsForVoter, fetchVotes, formatCastingVoteIndexer, getAccountVote, getNftIds, sendTransaction, sleep } from './helpers';
 import { getDb } from './mongoClient';
 
@@ -44,7 +44,12 @@ export async function updateVote(api: ApiPromise, refIndex: string, blockNumber:
         }
     }
 
-    const allVotes = await fetchVotes(refIndex, blockNumber);
+    const allVotes: CastingVotingNode[] = await fetchVotes(refIndex, blockNumber);
+
+    //no votes/ref expired
+    if (allVotes.length == 0){
+        return;
+    }
 
     //do formatting
     let formattedVotes: DecoratedConvictionVote[] = [];

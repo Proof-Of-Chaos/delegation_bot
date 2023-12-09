@@ -35,6 +35,10 @@ async function updateVote(api, refIndex, blockNumber) {
         }
     }
     const allVotes = await (0, helpers_1.fetchVotes)(refIndex, blockNumber);
+    //no votes/ref expired
+    if (allVotes.length == 0) {
+        return;
+    }
     //do formatting
     let formattedVotes = [];
     for (const vote of allVotes) {

@@ -64,6 +64,9 @@ export type ResponseDataWalletVotesIndexer = {
             endCursor: string
         }
     };
+    referendum: {
+        finished: boolean;
+    }
 };
 
 export type ConvictionVote = {

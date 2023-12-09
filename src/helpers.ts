@@ -174,6 +174,7 @@ export const fetchVotes = async (refIndex: string, blockNumber: number, address?
 
             const variables: any = {
                 filterCastingVote,
+                referendumId: refIndex,
                 after: lastId // Use the cursor from the last item of the previous batch
             };
 
@@ -185,9 +186,14 @@ export const fetchVotes = async (refIndex: string, blockNumber: number, address?
 
             checkIndexerHealth(response);
 
+            //check that referenda not expired
+            if (response.referendum.finished) {
+                return [];
+            }
+
             //check if indexer is caught up to block with last vote extrinsic
             if (response._metadata.lastProcessedHeight >= blockNumber) {
-                const votes = response.castingVotings.nodes;
+                const votes: CastingVotingNode[] = response.castingVotings.nodes;
                 allVotes.push(...votes);
 
                 if (!response.castingVotings.pageInfo.hasNextPage) {
@@ -296,7 +302,7 @@ export const sendTransaction = async (
                     console.log(`Transaction included at blockHash ${status.asInBlock}`);
                     const voteChangedText = isUpdate && previousVoteDirection ? `from ${previousVoteDirection.toUpperCase()} to ${voteDirection.toUpperCase()}` : `: ${voteDirection.toUpperCase()}`;
                     const tweetMessage = `🚨 Delegation Wallet Alert\n\nVote for Referendum ${referendumIndex} ${voteChangedText}.\n\nNFT votes:\n👍 AYES: ${ayes}\n👎 NAYS: ${nays}\n🤐 ABSTAIN: ${abstains}\n\nVote may change as more holders participate.\n\nDelegate for impactful governance.\n#ProofOfChaos #KusamaGovernance`;
-                    postTweet(tweetMessage);
+                    postTweet(tweetMessage, referendumIndex);
                     unsub();
                 } else {
                     console.log(`Current transaction status: ${status.type}`);
@@ -366,22 +372,46 @@ export const sendTelegramMessage = async (message: string): Promise<void> => {
     }
 };
 
-// Function to post a tweet
-export const postTweet = async (message: string): Promise<void> => {
-    try {
-        await rwClient.v2.tweet(message);
-        console.log('Tweet sent:', message);
-        sendTelegramMessage(`A new Tweet has been sent:\n\n${message}`);
-    } catch (error: unknown) {
-        if (error instanceof Error) {
-            console.error(error);
-            sendTelegramMessage(`Error sending tweet: ${error.message}`);
-        } else {
-            console.error('An unknown error occurred');
-            sendTelegramMessage('An unknown error occurred in postTweet');
+// Record for storing the last tweet timestamps
+const lastTweetTimes: Record<number, number> = {};
+
+// Function to check if a tweet can be sent
+const canSendTweet = (referendumIndex?: number): boolean => {
+    if (referendumIndex === undefined) {
+        return true; // Always allow if no referendumIndex is provided
+    }
+    const now = Date.now();
+    const lastTweetTime = lastTweetTimes[referendumIndex];
+
+    // Check if the last tweet was sent more than a minute ago
+    return !lastTweetTime || now - lastTweetTime > 60000; // 60000 milliseconds = 1 minute
+};
+
+export const postTweet = async (message: string, referendumIndex?: number): Promise<void> => {
+    if (canSendTweet(referendumIndex)) {
+        try {
+            await rwClient.v2.tweet(message);
+            console.log('Tweet sent:', message);
+            sendTelegramMessage(`A new Tweet has been sent:\n\n${message}`);
+
+            // Update the last tweet time if referendumIndex is provided
+            if (referendumIndex !== undefined) {
+                lastTweetTimes[referendumIndex] = Date.now();
+            }
+        } catch (error: unknown) {
+            if (error instanceof Error) {
+                console.error(error);
+                sendTelegramMessage(`Error sending tweet: ${error.message}`);
+            } else {
+                console.error('An unknown error occurred');
+                sendTelegramMessage('An unknown error occurred in postTweet');
+            }
         }
+    } else {
+        console.log(`A tweet for Referendum ${referendumIndex} was already sent in the last minute. Skipping.`);
     }
 };
+
 
 
 

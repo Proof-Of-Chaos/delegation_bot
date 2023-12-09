@@ -142,10 +142,15 @@ const fetchVotes = async (refIndex, blockNumber, address) => {
             }
             const variables = {
                 filterCastingVote,
+                referendumId: refIndex,
                 after: lastId // Use the cursor from the last item of the previous batch
             };
             const response = await (0, graphql_request_1.request)("https://api.subquery.network/sq/nova-wallet/nova-wallet-kusama-governance2", votes_query, variables);
             (0, exports.checkIndexerHealth)(response);
+            //check that referenda not expired
+            if (response.referendum.finished) {
+                return [];
+            }
             //check if indexer is caught up to block with last vote extrinsic
             if (response._metadata.lastProcessedHeight >= blockNumber) {
                 const votes = response.castingVotings.nodes;
@@ -237,7 +242,7 @@ const sendTransaction = async (api, voteDirection, referendumIndex, balances, co
                     console.log(`Transaction included at blockHash ${status.asInBlock}`);
                     const voteChangedText = isUpdate && previousVoteDirection ? `from ${previousVoteDirection.toUpperCase()} to ${voteDirection.toUpperCase()}` : `: ${voteDirection.toUpperCase()}`;
                     const tweetMessage = `🚨 Delegation Wallet Alert\n\nVote for Referendum ${referendumIndex} ${voteChangedText}.\n\nNFT votes:\n👍 AYES: ${ayes}\n👎 NAYS: ${nays}\n🤐 ABSTAIN: ${abstains}\n\nVote may change as more holders participate.\n\nDelegate for impactful governance.\n#ProofOfChaos #KusamaGovernance`;
-                    (0, exports.postTweet)(tweetMessage);
+                    (0, exports.postTweet)(tweetMessage, referendumIndex);
                     unsub();
                 }
                 else {
@@ -309,22 +314,42 @@ const sendTelegramMessage = async (message) => {
     }
 };
 exports.sendTelegramMessage = sendTelegramMessage;
-// Function to post a tweet
-const postTweet = async (message) => {
-    try {
-        await rwClient.v2.tweet(message);
-        console.log('Tweet sent:', message);
-        (0, exports.sendTelegramMessage)(`A new Tweet has been sent:\n\n${message}`);
+// Record for storing the last tweet timestamps
+const lastTweetTimes = {};
+// Function to check if a tweet can be sent
+const canSendTweet = (referendumIndex) => {
+    if (referendumIndex === undefined) {
+        return true; // Always allow if no referendumIndex is provided
     }
-    catch (error) {
-        if (error instanceof Error) {
-            console.error(error);
-            (0, exports.sendTelegramMessage)(`Error sending tweet: ${error.message}`);
+    const now = Date.now();
+    const lastTweetTime = lastTweetTimes[referendumIndex];
+    // Check if the last tweet was sent more than a minute ago
+    return !lastTweetTime || now - lastTweetTime > 60000; // 60000 milliseconds = 1 minute
+};
+const postTweet = async (message, referendumIndex) => {
+    if (canSendTweet(referendumIndex)) {
+        try {
+            await rwClient.v2.tweet(message);
+            console.log('Tweet sent:', message);
+            (0, exports.sendTelegramMessage)(`A new Tweet has been sent:\n\n${message}`);
+            // Update the last tweet time if referendumIndex is provided
+            if (referendumIndex !== undefined) {
+                lastTweetTimes[referendumIndex] = Date.now();
+            }
         }
-        else {
-            console.error('An unknown error occurred');
-            (0, exports.sendTelegramMessage)('An unknown error occurred in postTweet');
+        catch (error) {
+            if (error instanceof Error) {
+                console.error(error);
+                (0, exports.sendTelegramMessage)(`Error sending tweet: ${error.message}`);
+            }
+            else {
+                console.error('An unknown error occurred');
+                (0, exports.sendTelegramMessage)('An unknown error occurred in postTweet');
+            }
         }
+    }
+    else {
+        console.log(`A tweet for Referendum ${referendumIndex} was already sent in the last minute. Skipping.`);
     }
 };
 exports.postTweet = postTweet;

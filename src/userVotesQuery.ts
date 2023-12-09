@@ -1,7 +1,7 @@
 import gql from 'graphql-tag';
 
 export const QUERY_USER_VOTES = gql`
-  query UserVotesQuery($filterCastingVote: CastingVotingFilter, $after: Cursor) {
+  query UserVotesQuery($filterCastingVote: CastingVotingFilter, $referendumId: String!, $after: Cursor) {
     _metadata {
       lastProcessedHeight
       indexerHealthy
@@ -27,6 +27,9 @@ export const QUERY_USER_VOTES = gql`
         endCursor
         hasNextPage
       }
+    }
+    referendum(id: $referendumId) {
+      finished
     }
   }
 `;
