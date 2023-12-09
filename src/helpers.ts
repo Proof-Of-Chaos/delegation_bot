@@ -1,7 +1,6 @@
 import { getClient } from '@kodadot1/uniquery';
 import { request } from "graphql-request";
 import { BN, formatBalance } from "@polkadot/util";
-import dotenv from 'dotenv';
 import { ApiPromise, Keyring } from '@polkadot/api';
 import { encodeAddress } from "@polkadot/keyring";
 import { CastingVotingNode, DecoratedConvictionVote, ResponseDataWalletVotesIndexer, VoteChoice } from './types';
@@ -12,7 +11,6 @@ import { kusama } from './chainConfig';
 import axios from 'axios';
 import Twitter, { TweetV1 } from 'twitter-api-v2'
 
-dotenv.config();
 
 // Twitter client setup
 

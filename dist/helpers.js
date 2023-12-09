@@ -7,7 +7,6 @@ exports.postTweet = exports.sendTelegramMessage = exports.formatAmount = exports
 const uniquery_1 = require("@kodadot1/uniquery");
 const graphql_request_1 = require("graphql-request");
 const util_1 = require("@polkadot/util");
-const dotenv_1 = __importDefault(require("dotenv"));
 const api_1 = require("@polkadot/api");
 const keyring_1 = require("@polkadot/keyring");
 const types_1 = require("./types");
@@ -16,7 +15,6 @@ const util_crypto_1 = require("@polkadot/util-crypto");
 const chainConfig_1 = require("./chainConfig");
 const axios_1 = __importDefault(require("axios"));
 const twitter_api_v2_1 = __importDefault(require("twitter-api-v2"));
-dotenv_1.default.config();
 // Twitter client setup
 if (!process.env.TWITTER_API_KEY || !process.env.TWITTER_API_SECRET || !process.env.TWITTER_ACCESS_TOKEN || !process.env.TWITTER_ACCESS_SECRET) {
     throw new Error("No TWITTER_API_KEY or TWITTER_API_SECRET or TWITTER_ACCESS_TOKEN or TWITTER_ACCESS_SECRET provided in .env");

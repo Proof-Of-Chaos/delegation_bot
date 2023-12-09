@@ -1,4 +1,7 @@
 import { MongoClient, ServerApiVersion, Db } from 'mongodb';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 if (!process.env.MONGODB_USERNAME || !process.env.MONGODB_PASSWORD) {
     throw new Error("No MONGODB_USERNAME or MONGODB_PASSWORD provided in .env");

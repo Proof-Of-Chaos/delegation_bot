@@ -16,6 +16,8 @@ const mongoClient_1 = require("./mongoClient");
 //if not in line with current tally, send vote extrinsic
 async function updateVote(api, refIndex, blockNumber) {
     await (0, helpers_1.sleep)(20000); //give indexers 20 seconds to catch up
+    //check if ref ongoing
+    //if not exit
     //get all the proof of chaos nft IDS
     const id = '102';
     const client = (0, uniquery_1.getClient)('ahk');

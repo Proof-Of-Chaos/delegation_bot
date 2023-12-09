@@ -23,6 +23,10 @@ import { getDb } from './mongoClient';
 
 export async function updateVote(api: ApiPromise, refIndex: string, blockNumber: number) {
     await sleep(20000); //give indexers 20 seconds to catch up
+
+    //check if ref ongoing
+    //if not exit
+
     //get all the proof of chaos nft IDS
     const id = '102';
     const client = getClient('ahk');
