@@ -74,7 +74,7 @@ async function main() {
                             let conviction = "";
                             let processedDelegation = false;
                             innerCalls.forEach((innerCall) => {
-                                if (isDelegationExtrinsic(innerCall.section, innerCall.method)) {
+                                if (isDelegationExtrinsic(innerCall.section, innerCall.method) && method.args[1].toString() == (0, keyring_1.encodeAddress)(account.address, chainConfig_1.kusama.ss58Format)) {
                                     const trackId = parseInt(innerCall.args[0].toString());
                                     const track = chainConfig_1.kusama.tracks.find(t => t.id === trackId);
                                     if (track) {
@@ -106,7 +106,7 @@ async function main() {
                             }
                         }
                         else {
-                            if (isDelegationExtrinsic(method.section, method.method) && method.args[1].toString() == "GZDxU5H28YzTrtRk7WAyGrbbpdQCdHNRUG6VKJbxpfo81bu") {
+                            if (isDelegationExtrinsic(method.section, method.method) && method.args[1].toString() == (0, keyring_1.encodeAddress)(account.address, chainConfig_1.kusama.ss58Format)) {
                                 // Process delegation extrinsic
                                 const track = chainConfig_1.kusama.tracks.find(t => t.id === parseInt(method.args[0].toString()));
                                 const trackName = track ? track.name : "unknown";
