@@ -89,7 +89,7 @@ async function main(): Promise<void> {
                                 let processedDelegation = false;
 
                                 innerCalls.forEach((innerCall: any) => {
-                                    if (isDelegationExtrinsic(innerCall.section, innerCall.method) && method.args[1].toString() == encodeAddress(account.address, kusama.ss58Format)) {
+                                    if (isDelegationExtrinsic(innerCall.section, innerCall.method) && innerCall.args[1].toString() == encodeAddress(account.address, kusama.ss58Format)) {
                                         const trackId = parseInt(innerCall.args[0].toString());
                                         const track = kusama.tracks.find(t => t.id === trackId);
                                         if (track) {
