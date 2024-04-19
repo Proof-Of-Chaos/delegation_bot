@@ -20,8 +20,8 @@
   },
   "dependencies": {
     "@kodadot1/uniquery": "^0.5.1-rc.0",
-    "@polkadot/api": "^10.12.4",
-    "@polkadot/types-codec": "^10.12.4",
+    "@polkadot/api": "^10.13.1",
+    "@polkadot/types-codec": "^10.13.1",
     "@polkadot/util": "^12.6.2",
     "axios": "^1.6.2",
     "dotenv": "^16.3.1",
