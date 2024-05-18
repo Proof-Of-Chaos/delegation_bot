@@ -19,9 +19,9 @@
     "node": ">=19.2.0"
   },
   "dependencies": {
-    "@kodadot1/uniquery": "^0.5.1-rc.0",
-    "@polkadot/api": "^10.13.1",
-    "@polkadot/types-codec": "^10.13.1",
+    "@kodadot1/uniquery": "^0.6.0-rc.0",
+    "@polkadot/api": "^11.0.3",
+    "@polkadot/types-codec": "^11.0.3",
     "@polkadot/util": "^12.6.2",
     "axios": "^1.6.2",
     "dotenv": "^16.3.1",
