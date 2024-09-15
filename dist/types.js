@@ -8,11 +8,11 @@ var SubstrateChain;
     SubstrateChain["Westend"] = "westend";
     SubstrateChain["Rococo"] = "rococo";
     SubstrateChain["Local"] = "local";
-})(SubstrateChain || (exports.SubstrateChain = SubstrateChain = {}));
+})(SubstrateChain = exports.SubstrateChain || (exports.SubstrateChain = {}));
 var VoteChoice;
 (function (VoteChoice) {
     VoteChoice["Aye"] = "Aye";
     VoteChoice["Nay"] = "Nay";
     VoteChoice["Split"] = "Split";
     VoteChoice["Abstain"] = "Abstain";
-})(VoteChoice || (exports.VoteChoice = VoteChoice = {}));
+})(VoteChoice = exports.VoteChoice || (exports.VoteChoice = {}));

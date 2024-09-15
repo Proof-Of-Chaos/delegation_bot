@@ -179,7 +179,7 @@ export const fetchVotes = async (refIndex: string, blockNumber: number, address?
             };
 
             const response: ResponseDataWalletVotesIndexer = await request(
-                "https://api.subquery.network/sq/nova-wallet/nova-wallet-kusama-governance2",
+                "https://subquery-governance-kusama-prod.novasamatech.org",
                 votes_query,
                 variables
             );
