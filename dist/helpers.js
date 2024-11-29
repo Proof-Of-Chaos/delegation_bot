@@ -145,7 +145,7 @@ const fetchVotes = async (refIndex, blockNumber, address) => {
                 referendumId: refIndex,
                 after: lastId // Use the cursor from the last item of the previous batch
             };
-            const response = await (0, graphql_request_1.request)("https://subquery-governance-kusama-prod.novasamatech.org", votes_query, variables);
+            const response = await (0, graphql_request_1.request)("https://subquery-governance-kusama-prod.novasama-tech.org", votes_query, variables);
             (0, exports.checkIndexerHealth)(response);
             //check that referenda not expired
             if (response.referendum.finished) {
